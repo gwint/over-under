@@ -20,12 +20,13 @@ def get_updated_weights(current_slope: float, current_y_intercept: float, data):
 
 def main():
     ##pointsAtHalftime = int(input("Points at halftime: "))
+    epsilon = 0.0001
 
     with open(WEIGHTS_FILE_PATH, 'w', newline='') as weights_file:
         ## TODO: Read through directory 
         for preprocessed_data_file_path in os.scandir(PREPROCESSED_DATA_DIRECTORY):
             print(preprocessed_data_file_path.path)
-            slope = 1
+            slope = 0
             y_intercept = 0
             data = pd.read_csv(preprocessed_data_file_path.path)
 
@@ -33,9 +34,16 @@ def main():
 
             print(f"Training model for {team_name}...")
             for _ in range(NUM_TRAINING_EPOCHS):
-                slope, y_intercept = get_updated_weights(slope, y_intercept, data)
-                ##print(slope, y_intercept)
+                updated_slope, updated_y_intercept = get_updated_weights(slope, y_intercept, data)
+                if abs(updated_slope - slope) < epsilon and abs(updated_y_intercept - y_intercept) < epsilon:
+                    slope, y_intercept = updated_slope, updated_y_intercept
+                    break
+
+                slope, y_intercept = updated_slope, updated_y_intercept
+                print(slope, y_intercept)
+
             print(f"Model for {team_name} trained:", slope, y_intercept)
+            break
 
     '''
     data = pd.read_csv(DATA_PATH)
