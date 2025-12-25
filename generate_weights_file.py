@@ -1,15 +1,18 @@
 import pandas as pd
+import numpy as np
 import csv
 import os
 
-DATA_PATH = "preprocessed_data/preprocessed_data_wizards.csv"
-LEARNING_RATE = 0.0000001
+LEARNING_RATE = 0.000001
 NUM_TRAINING_EPOCHS = 15000
-WEIGHTS_FILE_PATH = "calculated_weights.csv"
+WEIGHTS_FILE_PATH = "calculated_weights_library.csv"
 PREPROCESSED_DATA_DIRECTORY = "preprocessed_data"
 
 def get_model_output(slope, y_intercept, single_input_data):
     return (float(slope) * float(single_input_data)) + float(y_intercept)
+
+def get_weights_from_library(data):
+    return np.polyfit(data["firstHalfTotal"], data["totalTeamPoints"], 1)
 
 def get_updated_weights(current_slope: float, current_y_intercept: float, data):
     updated_slope = current_slope - (LEARNING_RATE * sum([data.loc[i, "firstHalfTotal"] * (get_model_output(current_slope, current_y_intercept, data.loc[i, "firstHalfTotal"]) - data.loc[i, "totalTeamPoints"]) for i in range(data.shape[0])]))
@@ -23,6 +26,9 @@ def main():
     epsilon = 0.0001
 
     with open(WEIGHTS_FILE_PATH, 'w', newline='') as weights_file:
+        weights_writer = csv.DictWriter(weights_file, fieldnames=["slope", "y-intercept", "estimated-slope", "estimated-y-intercept", "name"])
+        weights_writer.writeheader()
+
         ## TODO: Read through directory 
         for preprocessed_data_file_path in os.scandir(PREPROCESSED_DATA_DIRECTORY):
             print(preprocessed_data_file_path.path)
@@ -40,23 +46,17 @@ def main():
                     break
 
                 slope, y_intercept = updated_slope, updated_y_intercept
-                print(slope, y_intercept)
+                ##print("calcuated weights:", slope, y_intercept)
 
             print(f"Model for {team_name} trained:", slope, y_intercept)
-            break
-
-    '''
-    data = pd.read_csv(DATA_PATH)
-    slope = 1
-    y_intercept = 0 
-
-    for _ in range(NUM_TRAINING_EPOCHS):
-        slope, y_intercept = get_updated_weights(slope, y_intercept, data)
-        print(slope, y_intercept)
-
-    ## TODO: Evaluate equations at point
-    expected_full_game_points = get_model_output(slope, y_intercept, pointsAtHalftime)
-    print(expected_full_game_points)
-    '''
+            weights_from_library = get_weights_from_library(data)
+            print("real weights:", weights_from_library[0], weights_from_library[1])
+            weights_writer.writerow({
+                "slope": weights_from_library[0],
+                "y-intercept": weights_from_library[1],
+                "estimated-slope": slope,
+                "estimated-y-intercept": y_intercept,
+                "name": team_name
+            })
 
 main()
