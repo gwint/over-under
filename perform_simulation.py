@@ -1,12 +1,13 @@
 import csv
 import pprint
 import requests
+import sys
 
 from pathlib import Path
 
-WEIGHTS_FILE = "./calculated_weights.csv"
-TESTING_GAME_DATA_FILE = "/home/gregory/Downloads/archive/GameDataForTesting.csv"
-PLAY_BY_PLAY_DATA_DIR = "/home/gregory/Downloads/25-26-season"
+WEIGHTS_FILE = "./calculated_weights_library.csv"
+TESTING_GAME_DATA_FILE = "/code/game_data/GameDataForTesting.csv"
+PLAY_BY_PLAY_DATA_DIR = "/code/game_data/25-26-season"
 
 ODDS_API_KEY = "7273e9fafc3995992cde8244590ac0ad"
 
@@ -95,7 +96,8 @@ def get_halftime_timestamp(game_date, team_1_name, team_2_name):
             #print(item.name)
             relevant_play_by_play_file = item.name
             break
-            
+
+    assert relevant_play_by_play_file
     ## TODO: Read the correct file and find the row for the second 'end of period' (halftime) and get the actual time.
     with open(f"{PLAY_BY_PLAY_DATA_DIR}/{relevant_play_by_play_file}", 'r') as play_by_play:
         play_by_play_reader = csv.DictReader(play_by_play)
@@ -154,18 +156,19 @@ def get_halftime_point_total_line(game_date, team_1_name, team_2_name):
         return {}
 
 def main():
-    print(f"Performing a backtest using the game data in <file-path>...")
-    print(f"Our per-game bet is $<dollar-amount> and we assume infinite bankroll")
-    print(f"Model weights are being pulled from <weights-file>")
+    print("starting pot amount: ", sys.argv[1])
+    pot = float(sys.argv[1])
 
-    ## TODO: Read in model weights and populate a dictionary.
+    wins = 0
+    losses = 0
+
     per_team_weights = {}
     with open(WEIGHTS_FILE, 'r', newline='') as weights_file:
         weights_reader = csv.DictReader(weights_file)
         for team_weights in weights_reader:
-            team_name = team_weights["team"]
-            slope = float(team_weights[" slope"])
-            y_intercept = float(team_weights[" yintercept"])
+            team_name = team_weights["name"]
+            slope = float(team_weights["slope"])
+            y_intercept = float(team_weights["y-intercept"])
 
             per_team_weights[team_name.strip()] = {
                 "slope": slope,
@@ -184,14 +187,11 @@ def main():
 
                 team_matchup_stats[row_key].append(testing_data)
 
-                ##print(testing_data["teamName"], testing_data["teamScore"], estimated_total, testing_data["q1Points"], testing_data["q2Points"])
-
-            wins = 0
-            losses = 0
-            pot = 1000.0
-            bet_amount = 210.0
+                ##print(testing_data["teamName"], testing_data["teamScore"], estimated_total, testing_data["q1Points"], testing_data["q2Points"]) 
             
             for matchup in team_matchup_stats:
+                bet_amount = max(200, pot * 0.2) ##float(sys.argv[2])
+
                 team_1_row, team_2_row = tuple(team_matchup_stats[matchup])
                 assert team_1_row["teamId"] == team_2_row["opponentTeamId"]
                 assert team_2_row["teamId"] == team_1_row["opponentTeamId"]
@@ -227,7 +227,7 @@ def main():
                 actual_total = team_1_point_total + team_2_point_total
                 
                 betting_line = get_halftime_point_total_line(game_datetime, team_1_name, team_2_name)
-                #print("betting line:", betting_line)
+                print("betting line:", betting_line)
                 line = betting_line["line"]
                 over_odds = betting_line["over"]
                 under_odds = betting_line["under"]
@@ -240,19 +240,15 @@ def main():
                 if estimated_total >= line:
                     ##print("Betting the over")
                     if actual_total < line:
-                        print("lost the bet")
                         losses += 1
                     else:
-                        print("won the best")
                         wins += 1
                         pot += under_payoff
                 else:
                     #print("Betting the under")
                     if actual_total > line:
-                        print("lost the best")
                         losses += 1
                     else:
-                        print("won the best")
                         wins += 1
                         pot += over_payoff
 
@@ -262,6 +258,7 @@ def main():
 
             print("wins:", wins)
             print("losses:", losses)
+            print("pot:", pot)
     
     ## TODO: Go through each game in the backtesting dataset: we need the team names, q1/q2 scores,
     ## total scores, and the betting lines for these games on draftkings.  We also need to get the
