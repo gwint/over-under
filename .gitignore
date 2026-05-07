@@ -1,1 +1,5 @@
 *.swp
+preprocessed_data/preprocessed_data_*.csv
+visualization/pts_visualized/*.png
+visualizations
+preprocessed_data
