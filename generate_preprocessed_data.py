@@ -1,12 +1,19 @@
 import csv
+import os
+import shutil
 import pandas as pd
 import sys
 
 PREPROCESSED_DATA_COLUMN_NAMES = ["firstHalfTotal", "totalTeamPoints"]
+TEAMS_TO_IGNORE = set(["loong-lions", "phoenix", "jerusalem b.c.", "united"])
 
 def main():
     game_data_file_path = sys.argv[1]
     target_directory = sys.argv[2]
+
+    if os.path.exists(target_directory):
+        shutil.rmtree(target_directory)
+    os.makedirs(target_directory, exist_ok=True)
 
     per_team_row_data = {}
 
@@ -28,7 +35,10 @@ def main():
                 }) 
 
     for team_id in per_team_row_data:
-        preprocessed_team_data_file_name = f"{target_directory}/preprocessed_data_{per_team_row_data[team_id]['name'].lower()}.csv"
+        team_name = per_team_row_data[team_id]["name"].lower()
+        if team_name in TEAMS_TO_IGNORE:
+            continue
+        preprocessed_team_data_file_name = f"{target_directory}/preprocessed_data_{team_name.lower()}.csv"
         with open(preprocessed_team_data_file_name, 'w', newline='') as preprocessed_team_data_file:
             writer = csv.DictWriter(preprocessed_team_data_file, fieldnames=PREPROCESSED_DATA_COLUMN_NAMES)
             writer.writeheader()
