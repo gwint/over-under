@@ -6,8 +6,6 @@ import sys
 
 LEARNING_RATE = 0.000003
 NUM_TRAINING_EPOCHS = 9000
-##WEIGHTS_FILE_PATH = os.getenv("WEIGHTS_FILE_PATH")
-##PREPROCESSED_DATA_DIRECTORY = os.getenv("PREPROCESSED_DATA_DIRECTORY")
 
 def get_model_output(slope, y_intercept, single_input_data):
     return (float(slope) * float(single_input_data)) + float(y_intercept)
@@ -33,8 +31,8 @@ def get_updated_weights(current_slope: float, current_y_intercept: float, data):
     return (updated_slope, updated_y_intercept)
 
 def main():
-    weights_file_path = sys.argv[1]
-    preprocessed_dir_path = sys.argv[2]
+    preprocessed_dir_path = sys.argv[1]
+    weights_file_path = sys.argv[2]
 
     epsilon = 0.0001
 

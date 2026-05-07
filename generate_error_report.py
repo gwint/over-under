@@ -8,24 +8,23 @@ from sklearn.metrics import root_mean_squared_error
 SKIPPABLE_TEAMS = ["loong-lions", "phoenix", "jerusalem b.c.", "united"]
 
 def main():
-    ## Take in weights file on the command line along with the game results file.
     game_results_file_path = sys.argv[1]
     weights_file_path = sys.argv[2]
+    error_report_file = sys.argv[3]
 
     per_team_weights = {}
     with open(weights_file_path, 'r', newline='') as weights_file:
         weights_reader = csv.DictReader(weights_file)
         for team_weights in weights_reader:
-            team_name = team_weights["Team Name"]
-            slope = float(team_weights[" slope"])
-            y_intercept = float(team_weights[" y-intercept"])
+            team_name = team_weights["name"]
+            slope = float(team_weights["slope"])
+            y_intercept = float(team_weights["y-intercept"])
 
             per_team_weights[team_name.lower().strip()] = {
                 "slope": slope,
                 "y_intercept": y_intercept
             }
 
-        per_team_sum_squared_residuals = {}
         per_team_library_rmse_values = {}
 
         per_team_game_count = {}
@@ -52,20 +51,21 @@ def main():
                 per_team_library_rmse_values[team_1]["pred"].append(team_1_score_calculated)
                 per_team_library_rmse_values[team_1]["actual"].append(team_1_score_actual)
 
-                if team_1 not in per_team_sum_squared_residuals:
-                    per_team_sum_squared_residuals[team_1] = 0.0
+        for team in per_team_library_rmse_values:
+            print(team, root_mean_squared_error(per_team_library_rmse_values[team]["actual"], per_team_library_rmse_values[team]["pred"]))
 
-                if team_1 not in per_team_game_count:
-                    per_team_game_count[team_1] = 0
+        assert(len(per_team_library_rmse_values) == 30)
 
-                per_team_sum_squared_residuals[team_1] += (team_1_score_calculated - team_1_score_actual) ** 2
-                per_team_game_count[team_1] += 1
+        with open(error_report_file, 'w', newline='') as library_rmse_values_file:
+            fieldnames = ["teamName", "rmse"]
+            writer = csv.DictWriter(library_rmse_values_file, fieldnames=fieldnames)
+            writer.writeheader()
 
-        for team in per_team_sum_squared_residuals:
-            per_team_sum_squared_residuals[team] = (per_team_sum_squared_residuals[team] / per_team_game_count[team]) ** 0.5
-            print(team, root_mean_squared_error(per_team_library_rmse_values[team]["actual"], per_team_library_rmse_values[team]["pred"]), per_team_sum_squared_residuals[team])
-
-        assert(len(per_team_sum_squared_residuals) == 30)
-        ##pprint.pprint(per_team_sum_squared_residuals)
+            for team in per_team_library_rmse_values:
+                rmse_value = root_mean_squared_error(per_team_library_rmse_values[team]["actual"], per_team_library_rmse_values[team]["pred"])
+                writer.writerow({
+                    "teamName": team,
+                    "rmse": rmse_value
+                })
 
 main()
