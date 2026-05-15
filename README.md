@@ -22,6 +22,7 @@ NOTE: The preprocessed_data directory is assumed to already exist and should con
 NOTE: The generated weights file (in the example named 'linear_regression_weights') will contain slope and y-intercept values computed by both a manual gradient descent implementation and a library-provided function call for comparison.
 
 4) Generate an error report tracking test error against a set of team scoring data not included in the test set.  generate_error_report.py. Creates a csv containing the sum of squared residuals on a per-team basis
-for a given set of weights.  Algorithm type must be provided: lr = Linear Regression, lwlr = Locally Weighted Linear Regression.
+for a given set of weights.  Algorithm type must be provided: lr = Linear Regression, lwlr = Locally Weighted Linear Regression, both = Run both Locally Weighted Linear Regression and Linear Regression.
 `python generate_error_report.py lr game_data/GameDataForTesting.csv linear_regression_weights error_report`
-`python generate_error_report.py lwlr game_data/GameDataForTesting.csv error_report`
+`python generate_error_report.py lwlr game_data/TeamStatistics.csv game_data/GameDataForTesting.csv error_report`
+`python generate_error_report.py both game_data/TeamStatistics.csv game_data/GameDataForTesting.csv linear_regression_weights error_report`

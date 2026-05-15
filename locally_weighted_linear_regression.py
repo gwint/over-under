@@ -7,7 +7,7 @@ from math import exp
 
 TEAM_STATISTICS_FILE = "/home/gregory/Projects/over-under/game_data/TeamStatistics.csv"
 TEAM = "Heat"
-BANDWIDTH_PARAMETER = 10
+BANDWIDTH_PARAMETER = 4
 
 ## Must calcualte weights matrix (n x n) for each point to be tested.
 def _get_weights(training_df, test_pt, bandwidth_parameter):
@@ -42,6 +42,7 @@ def performLinearRegression(training_df, test_df):
 
     ## Calculate mean squared error.
     print("MSE:", mean_squared_error(test_df[["estimatedScores"]], test_df[["teamScore"]]))
+    return test_df["estimatedScores"].to_list(), test_df["teamScore"].to_list()
 
 
 ## Performs locally weighted linear regression based on data in input file.
@@ -94,6 +95,7 @@ def performLocallyWeightedLinearRegression(training_df, test_df):
         estimated_full_game_scores.append(estimated_score)
 
     print("MSE:", mean_squared_error(real_full_game_scores, estimated_full_game_scores))
+    return real_full_game_scores, estimated_full_game_scores
 
 if __name__ == "__main__":
     ## Read statistics file and pull out relevant rows, then break into training and test sets.
@@ -105,7 +107,7 @@ if __name__ == "__main__":
     recent_games_df = data_df[data_df["gameDateTimeEst"] > "2022-01-01"]
     print(recent_games_df.shape)
     ## Need to pull out data for a single team.
-    team_specific_df = recent_games_df[recent_games_df["teamName"] == TEAM]
+    team_specific_df = recent_games_df[recent_games_df["teamName"] == TEAM.title()]
     print(team_specific_df.shape)
     ## Split data into test and training sets.
     train_df, test_df = train_test_split(team_specific_df, test_size=0.4, random_state=42)
